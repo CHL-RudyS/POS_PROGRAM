@@ -47,7 +47,8 @@ export function App() {
 
   return (
     <div className="shell">
-      <MenuLayar current={screen} onGo={go} />
+      {/* No screen switching before sign-in: 00 Login shows only the login form. */}
+      {screenId !== "login" && <MenuLayar current={screen} onGo={go} />}
       <main className="main">
         {/* 00 Login and 01 Cabang & Lokasi carry their own headings. */}
         {screenId !== "login" && screenId !== "unit" && <AppHeader title={screen.label} onGo={go} />}
