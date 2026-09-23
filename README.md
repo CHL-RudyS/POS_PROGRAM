@@ -53,7 +53,7 @@ Setiap transaksi mencatat siapa yang menyimpan dan siapa yang mem-void.
 
 ### Mengelola user
 
-Login sebagai Administrator, buka **05 User** di Menu Layar. Di sana bisa:
+Login sebagai Administrator, buka **User** di menu header. Di sana bisa:
 menambah user (password acak dibuat otomatis dan ditampilkan sekali untuk disampaikan),
 mengubah nama dan peran, menonaktifkan akun, reset password, dan membuka akun yang terkunci.
 Mengubah peran, menonaktifkan, atau reset password langsung mengeluarkan user itu dari semua perangkat.

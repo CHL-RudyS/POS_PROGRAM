@@ -16,8 +16,9 @@ admin (`ADMIN_EMAIL`, `ADMIN_PASSWORD`). The Login screen signs in against the A
 saving POS bills and the Finance screen need a signed-in user with the right role
 (see the root README). Without these settings the other screens still work.
 
-The app always opens on **00 Login**. Switch screens with the floating
-**Menu Layar** pill at bottom-left (see `../project/CLAUDE.md`).
+The app always opens on **00 Login**. After signing in, switch screens with the
+menu row under each screen's header (Finance and User show only for roles that
+may open them). The floating Menu Layar from the design was removed on request.
 
 | No. | Screen | File |
 | --- | --- | --- |

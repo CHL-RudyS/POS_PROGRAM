@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { refreshSession } from "./api";
 import { SCREENS, type ScreenId } from "./data";
-import { MenuLayar } from "./components/MenuLayar";
 import { AppHeader } from "./components/AppHeader";
 import { Login } from "./screens/Login";
 import { Cabang } from "./screens/Cabang";
@@ -47,11 +46,9 @@ export function App() {
 
   return (
     <div className="shell">
-      {/* No screen switching before sign-in: 00 Login shows only the login form. */}
-      {screenId !== "login" && <MenuLayar current={screen} onGo={go} />}
       <main className="main">
         {/* 00 Login and 01 Cabang & Lokasi carry their own headings. */}
-        {screenId !== "login" && screenId !== "unit" && <AppHeader title={screen.label} onGo={go} />}
+        {screenId !== "login" && screenId !== "unit" && <AppHeader title={screen.label} current={screenId} onGo={go} />}
         {content}
       </main>
     </div>

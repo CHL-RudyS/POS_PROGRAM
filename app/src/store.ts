@@ -2,7 +2,7 @@ import { useCallback, useSyncExternalStore } from "react";
 
 // Session-lifetime UI state shared across screens. The prototype kept every
 // screen's state in one object, so a cart or HK progress survived switching
-// screens via Menu Layar; this keeps that behaviour without prop drilling.
+// screens; this keeps that behaviour without prop drilling.
 const values = new Map<string, unknown>();
 const listeners = new Set<() => void>();
 
