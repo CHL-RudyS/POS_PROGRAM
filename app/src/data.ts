@@ -3,7 +3,7 @@
 
 export type ScreenId =
   | "login" | "unit" | "frontdesk" | "avail" | "checkin"
-  | "folio" | "rack" | "hk" | "pos" | "gm";
+  | "folio" | "rack" | "hk" | "pos" | "gm" | "finance";
 
 export interface Screen { id: ScreenId; label: string; num: string }
 
@@ -18,6 +18,7 @@ export const SCREENS: Screen[] = [
   { id: "hk", label: "FD - Housekeeping", num: "02E" },
   { id: "pos", label: "FD - POS Resto", num: "02F" },
   { id: "gm", label: "GM Dashboard", num: "03" },
+  { id: "finance", label: "Finance", num: "04" },
 ];
 
 export const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
@@ -256,26 +257,9 @@ export const HK_ACTION: Record<HkStatus, string> = {
 
 /* ── 02F POS Resto ──────────────────────────────────────── */
 
-export const MENU: Record<string, [name: string, price: number][]> = {
-  "Makanan": [["Nasi Goreng Kampung", 95000], ["Sate Ayam Madura", 110000], ["Gado-Gado Jakarta", 78000], ["Soto Betawi", 98000], ["Ikan Gurame Bakar", 185000], ["Club Sandwich", 92000], ["Mie Goreng Seafood", 105000], ["Rendang Daging", 145000]],
-  "Minuman": [["Es Teh Manis", 32000], ["Kopi Tubruk", 38000], ["Jus Alpukat", 55000], ["Es Kelapa Muda", 48000], ["Teh Tarik", 42000], ["Air Mineral 600ml", 25000]],
-  "Bar": [["Bintang Draft", 78000], ["Mojito", 145000], ["Wine by Glass", 165000], ["Mocktail Nusantara", 95000]],
-  "Dessert": [["Es Campur", 58000], ["Pisang Goreng Keju", 52000], ["Klappertaart", 65000], ["Sorbet Markisa", 48000]],
-};
-
-export const MENU_PRICE: Record<string, number> = Object.fromEntries(Object.values(MENU).flat());
+export { MENU, MENU_PRICE, posTotals } from "../../shared/pos";
 
 export const DEFAULT_CART: Record<string, number> = { "Nasi Goreng Kampung": 2, "Es Teh Manis": 2, "Pisang Goreng Keju": 1 };
-
-/** Service 11% on subtotal, PB1 10% on (subtotal + service). */
-export function posTotals(sub: number) {
-  return {
-    sub,
-    svc: Math.round(sub * 0.11),
-    tax: Math.round(sub * 1.11 * 0.1),
-    total: Math.round(sub * 1.11 * 1.1),
-  };
-}
 
 /* ── 03 GM Dashboard ────────────────────────────────────── */
 

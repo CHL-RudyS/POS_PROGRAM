@@ -5,9 +5,14 @@ React + TypeScript + Vite implementation of the Claude Design handoff in
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:5173 — also serves the API in ../api
 npm run build    # type-check + production build to dist/
 ```
+
+POS payments (02F) are saved to Postgres through the API and listed on 04 Finance.
+For local development, run `npm install` in the repo root too, then copy
+`.env.example` to `.env.local` and set `DATABASE_URL`. Without it the other
+screens work and POS/Finance show "Database belum dikonfigurasi".
 
 The app always opens on **00 Login**. Switch screens with the floating
 **Menu Layar** pill at bottom-left (see `../project/CLAUDE.md`).
@@ -24,7 +29,10 @@ The app always opens on **00 Login**. Switch screens with the floating
 | 02E | FD - Housekeeping | `src/screens/Housekeeping.tsx` |
 | 02F | FD - POS Resto | `src/screens/PosResto.tsx` |
 | 03 | GM Dashboard | `src/screens/GmDashboard.tsx` |
+| 04 | Finance | `src/screens/Finance.tsx` |
 
+- `src/api.ts` calls the POS API; `../shared/pos.ts` holds the menu, tax rules and
+  transaction types used by both the app and the API.
 - `src/data.ts` holds all mock data (ported verbatim from the design) — the
   place to swap in API calls.
 - `src/styles/broadsheet.css` is the Broadsheet design system (tokens +

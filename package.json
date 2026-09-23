@@ -1,0 +1,15 @@
+{
+  "name": "pos-program",
+  "private": true,
+  "description": "Serverless API (api/) for the HotelOne app in app/.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  }
+}
