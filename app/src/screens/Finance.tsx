@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { PAYMENT_LABELS, PAYMENT_METHODS, type PaymentMethod, type Transaction } from "../../../shared/pos";
 import { listTransactions, voidTransaction, type TransactionList } from "../api";
-import { rp } from "../data";
+import { rp, type ScreenId } from "../data";
+import { can } from "../../../shared/auth";
+import { useSession } from "../session";
 import { useStored } from "../store";
 import { Dialog } from "../components/Dialog";
 
@@ -13,7 +15,9 @@ const time = (iso: string) =>
 const METHOD_FILTERS: [PaymentMethod | "", string][] = [["", "Semua metode"], ...PAYMENT_METHODS.map((m) => [m, PAYMENT_LABELS[m]] as [PaymentMethod, string])];
 const STATUS_FILTERS: [string, string][] = [["", "Semua status"], ["posted", "Posted"], ["void", "Void"]];
 
-export function Finance() {
+export function Finance({ onGo }: { onGo: (id: ScreenId) => void }) {
+  const user = useSession();
+  const allowed = can(user?.role, "viewFinance");
   const [date, setDate] = useStored("finance.date", today());
   const [method, setMethod] = useStored<PaymentMethod | "">("finance.method", "");
   const [status, setStatus] = useStored("finance.status", "");
@@ -35,11 +39,25 @@ export function Finance() {
     }
   }, [date, method, status]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (allowed) load(); }, [load, allowed]);
 
   const rows = data?.transactions ?? [];
   const sel = rows.find((t) => t.id === selId) ?? null;
   const s = data?.summary;
+
+  if (user === undefined) return <div className="muted-12">Memeriksa sesi…</div>;
+  if (!allowed) {
+    return (
+      <div className="fin-error" role="alert">
+        {user === null ? (
+          <><strong>Silakan login.</strong> Layar Finance hanya untuk peran Finance, Supervisor, dan Administrator.{" "}
+            <button className="btn btn-ghost btn-sm" onClick={() => onGo("login")}>Masuk</button></>
+        ) : (
+          <><strong>Akses ditolak.</strong> Layar Finance hanya untuk peran Finance, Supervisor, dan Administrator.</>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="stack-6">
@@ -134,6 +152,7 @@ export function Finance() {
                     <div>{new Intl.DateTimeFormat("id-ID", { timeZone: TZ, dateStyle: "long", timeStyle: "short" }).format(new Date(sel.createdAt))} WIB</div>
                     <div>{sel.outlet} · Meja {sel.tableNo} · {sel.pax} pax · Waiter {sel.waiter}</div>
                     <div>{PAYMENT_LABELS[sel.method]}{sel.roomNo ? ` · Kamar ${sel.roomNo}` : ""}{sel.guestName ? ` · ${sel.guestName}` : ""}</div>
+                    {sel.createdBy && <div>Disimpan oleh {sel.createdBy}</div>}
                   </div>
                   <div className="pos-lines">
                     {sel.items.map((it) => (
@@ -154,9 +173,11 @@ export function Finance() {
                     <span className="stat-value">{rp(sel.total)}</span>
                   </div>
                   {sel.status === "void" ? (
-                    <div className="fin-void-note">Di-void {sel.voidedAt ? time(sel.voidedAt) : ""} — {sel.voidReason}</div>
-                  ) : (
+                    <div className="fin-void-note">Di-void {sel.voidedAt ? time(sel.voidedAt) : ""}{sel.voidedBy ? ` oleh ${sel.voidedBy}` : ""} — {sel.voidReason}</div>
+                  ) : can(user?.role, "voidTransaction") ? (
                     <button className="btn btn-secondary btn-sm" onClick={() => setVoiding(sel)}>Void transaksi</button>
+                  ) : (
+                    <div className="note">Void hanya bisa dilakukan Supervisor.</div>
                   )}
                 </>
               ) : (
@@ -198,21 +219,21 @@ function VoidDialog({ tx, onClose, onDone }: { tx: Transaction; onClose: () => v
       <div className="field"><label htmlFor="void-reason">Alasan (wajib)</label>
         <input id="void-reason" className="input" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200}
           placeholder="mis. salah input meja" autoFocus /></div>
-      <div className="note">Void butuh otorisasi supervisor. Transaksi tetap tercatat untuk audit.</div>
+      <div className="note">Void dicatat atas nama Anda. Transaksi tetap tersimpan untuk audit.</div>
       {error && <div className="form-error" role="alert">{error}</div>}
     </Dialog>
   );
 }
 
 function exportCsv(date: string, rows: Transaction[]) {
-  const head = ["No", "Waktu", "Outlet", "Meja", "Pax", "Waiter", "Metode", "Kamar", "Tamu", "Subtotal", "Service", "PB1", "Total", "Status", "Alasan void", "Item"];
+  const head = ["No", "Waktu", "Outlet", "Meja", "Pax", "Waiter", "Metode", "Kamar", "Tamu", "Subtotal", "Service", "PB1", "Total", "Status", "Alasan void", "Disimpan oleh", "Void oleh", "Item"];
   const cell = (v: unknown) => {
     const s = v === null || v === undefined ? "" : String(v);
     return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = rows.map((t) => [
     t.no, time(t.createdAt), t.outlet, t.tableNo, t.pax, t.waiter, PAYMENT_LABELS[t.method], t.roomNo, t.guestName,
-    t.subtotal, t.service, t.tax, t.total, t.status, t.voidReason, t.items.map((i) => `${i.qty}x ${i.name}`).join(", "),
+    t.subtotal, t.service, t.tax, t.total, t.status, t.voidReason, t.createdBy, t.voidedBy, t.items.map((i) => `${i.qty}x ${i.name}`).join(", "),
   ].map(cell).join(";"));
   // Semicolons + BOM so Excel with Indonesian regional settings opens it in columns.
   const blob = new Blob(["﻿" + [head.join(";"), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });

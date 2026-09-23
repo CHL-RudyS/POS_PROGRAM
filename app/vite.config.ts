@@ -34,9 +34,11 @@ function devApi(): Plugin {
 }
 
 export default defineConfig(({ mode }) => {
-  // Make DATABASE_URL from app/.env.local visible to the API modules in dev.
+  // Make the API's settings from app/.env.local visible to the API modules in dev.
   const env = loadEnv(mode, process.cwd(), "");
-  if (env.DATABASE_URL && !process.env.DATABASE_URL) process.env.DATABASE_URL = env.DATABASE_URL;
+  for (const key of ["DATABASE_URL", "AUTH_SECRET", "ADMIN_EMAIL", "ADMIN_PASSWORD", "ADMIN_NAME"]) {
+    if (env[key] && !process.env[key]) process.env[key] = env[key];
+  }
 
   return {
     plugins: [react(), devApi()],

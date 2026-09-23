@@ -61,6 +61,9 @@ export interface Transaction {
   status: "posted" | "void";
   voidReason: string | null;
   voidedAt: string | null;
+  /** Names of the users who saved / voided the bill (null for rows saved before login existed). */
+  createdBy: string | null;
+  voidedBy: string | null;
   items: TransactionItem[];
 }
 

@@ -1,8 +1,11 @@
 import { COMPANIES, DEFAULT_COMPANY, type ScreenId } from "../data";
 import { useStored } from "../store";
 import { SearchIcon } from "../components/icons";
+import { useSession } from "../session";
+import { ROLE_LABELS } from "../../../shared/auth";
 
 export function Cabang({ onGo }: { onGo: (id: ScreenId) => void }) {
+  const user = useSession();
   const [co, setCo] = useStored("unit.company", DEFAULT_COMPANY);
   const [query, setQuery] = useStored("unit.query", "");
   const q = query.toLowerCase();
@@ -16,8 +19,8 @@ export function Cabang({ onGo }: { onGo: (id: ScreenId) => void }) {
       <div className="unit-welcome">
         <div className="unit-greet">
           <div className="unit-greet-label">Selamat Datang Kembali :</div>
-          <h2>Rina Pratiwi</h2>
-          <div className="unit-greet-role">Administrator</div>
+          <h2>{user?.name ?? "Rina Pratiwi"}</h2>
+          <div className="unit-greet-role">{user ? ROLE_LABELS[user.role] : "Administrator"}</div>
           <div className="unit-greet-rule" />
           <p>Pilih hotel dan lokasi cabang untuk mulai atau melanjutkan pekerjaan yang belum selesai.</p>
           <div className="unit-greet-login">Login 12 September 2026 · 08:41 WIB</div>

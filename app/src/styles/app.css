@@ -524,3 +524,4 @@ a:hover { color: var(--color-accent-700); }
   background: var(--color-accent-2-100); color: var(--color-accent-2-800);
 }
 .fin-error strong { font-weight: 600; }
+.login-error { margin: 0 0 var(--space-3); }

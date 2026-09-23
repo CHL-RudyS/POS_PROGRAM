@@ -10,6 +10,9 @@ export interface ApiRequest {
   method: string;
   query: URLSearchParams;
   body: unknown;
+  cookies: Record<string, string>;
+  /** Append a Set-Cookie header to the response. */
+  setCookie: (cookie: string) => void;
 }
 
 type Method = "GET" | "POST";
@@ -33,8 +36,17 @@ export function route(handlers: Partial<Record<Method, Handler>>) {
         throw new HttpError(405, "Metode tidak didukung");
       }
       const url = new URL(req.url ?? "/", "http://localhost");
+      if (req.method !== "GET" && !String(req.headers["content-type"] ?? "").startsWith("application/json")) {
+        // Plain HTML forms cannot send JSON cross-site, so this also blocks CSRF on cookie-authenticated POSTs.
+        throw new HttpError(415, "Content-Type harus application/json");
+      }
       const body = req.method === "GET" ? undefined : await readJson(req);
-      const data = await handler({ method: req.method!, query: url.searchParams, body });
+      const setCookies: string[] = [];
+      const data = await handler({
+        method: req.method!, query: url.searchParams, body,
+        cookies: parseCookies(req.headers.cookie),
+        setCookie: (c) => { setCookies.push(c); res.setHeader("Set-Cookie", setCookies); },
+      });
       res.statusCode = 200;
       res.end(JSON.stringify(data));
     } catch (err) {
@@ -44,6 +56,18 @@ export function route(handlers: Partial<Record<Method, Handler>>) {
       res.end(JSON.stringify({ error: status === 500 ? "Terjadi kesalahan di server" : (err as Error).message }));
     }
   };
+}
+
+function parseCookies(header: string | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const part of (header ?? "").split(";")) {
+    const i = part.indexOf("=");
+    if (i < 1) continue;
+    try {
+      out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    } catch { /* ignore malformed cookie */ }
+  }
+  return out;
 }
 
 async function readJson(req: NodeRequest): Promise<unknown> {

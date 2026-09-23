@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { refreshSession } from "./api";
 import { SCREENS, type ScreenId } from "./data";
 import { MenuLayar } from "./components/MenuLayar";
 import { AppHeader } from "./components/AppHeader";
@@ -19,6 +20,8 @@ export function App() {
   const [screenId, setScreenId] = useState<ScreenId>("login");
   const screen = SCREENS.find((s) => s.id === screenId)!;
 
+  useEffect(() => { refreshSession(); }, []);
+
   const go = (id: ScreenId) => {
     setScreenId(id);
     window.scrollTo(0, 0);
@@ -35,7 +38,7 @@ export function App() {
       case "rack": return <RoomRack />;
       case "hk": return <Housekeeping />;
       case "pos": return <PosResto onGo={go} />;
-      case "finance": return <Finance />;
+      case "finance": return <Finance onGo={go} />;
       case "gm": return <GmDashboard />;
     }
   })();
@@ -45,7 +48,7 @@ export function App() {
       <MenuLayar current={screen} onGo={go} />
       <main className="main">
         {/* 00 Login and 01 Cabang & Lokasi carry their own headings. */}
-        {screenId !== "login" && screenId !== "unit" && <AppHeader title={screen.label} />}
+        {screenId !== "login" && screenId !== "unit" && <AppHeader title={screen.label} onGo={go} />}
         {content}
       </main>
     </div>

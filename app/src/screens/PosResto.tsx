@@ -2,6 +2,8 @@ import { useState } from "react";
 import { DEFAULT_CART, MENU, MENU_PRICE, posTotals, rp, type ScreenId } from "../data";
 import { PAYMENT_LABELS, type PaymentMethod, type Transaction } from "../../../shared/pos";
 import { saveTransaction } from "../api";
+import { can } from "../../../shared/auth";
+import { useSession } from "../session";
 import { useStored } from "../store";
 import { Dialog } from "../components/Dialog";
 
@@ -9,6 +11,8 @@ import { Dialog } from "../components/Dialog";
 const DEMO_GUEST = { roomNo: "0912", name: "Anindya Rahmawati" };
 
 export function PosResto({ onGo }: { onGo: (id: ScreenId) => void }) {
+  const user = useSession();
+  const allowed = can(user?.role, "saveTransaction");
   const [cat, setCat] = useStored("pos.cat", "Makanan");
   const [cart, setCart] = useStored<Record<string, number>>("pos.cart", DEFAULT_CART);
   const [saved, setSaved] = useStored<Transaction | null>("pos.lastSaved", null);
@@ -106,13 +110,17 @@ export function PosResto({ onGo }: { onGo: (id: ScreenId) => void }) {
           <span>Total</span>
           <span className="stat-value">{rp(totals.total)}</span>
         </div>
-        <button className="btn btn-primary btn-block" disabled={lines.length === 0} onClick={() => openPay("ROOM")}>Charge to room</button>
+        <button className="btn btn-primary btn-block" disabled={lines.length === 0 || !allowed} onClick={() => openPay("ROOM")}>Charge to room</button>
         <div className="row-wrap">
-          <button className="btn btn-secondary btn-sm" disabled={lines.length === 0} onClick={() => openPay("CASH")}>Tunai</button>
-          <button className="btn btn-secondary btn-sm" disabled={lines.length === 0} onClick={() => openPay("QRIS")}>QRIS</button>
-          <button className="btn btn-secondary btn-sm" disabled={lines.length === 0} onClick={() => openPay("CARD")}>Kartu</button>
+          <button className="btn btn-secondary btn-sm" disabled={lines.length === 0 || !allowed} onClick={() => openPay("CASH")}>Tunai</button>
+          <button className="btn btn-secondary btn-sm" disabled={lines.length === 0 || !allowed} onClick={() => openPay("QRIS")}>QRIS</button>
+          <button className="btn btn-secondary btn-sm" disabled={lines.length === 0 || !allowed} onClick={() => openPay("CARD")}>Kartu</button>
           <button className="btn btn-secondary btn-sm">Split bill</button>
         </div>
+        {user === null && (
+          <div className="note">Login sebagai Kasir untuk menyimpan transaksi. <button className="btn btn-ghost btn-sm" onClick={() => onGo("login")}>Masuk</button></div>
+        )}
+        {user && !allowed && <div className="note">Peran Anda tidak dapat menyimpan transaksi POS.</div>}
         {saved && (
           <div className="pos-saved" role="status">
             <div>Tersimpan <strong>{saved.no}</strong> · {PAYMENT_LABELS[saved.method]}{saved.roomNo ? ` ${saved.roomNo}` : ""} · {rp(saved.total)}</div>

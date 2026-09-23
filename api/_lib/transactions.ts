@@ -5,6 +5,8 @@ import {
 } from "../../shared/pos";
 import { db } from "./db";
 import { HttpError, type ApiRequest } from "./http";
+import { requireUser } from "./auth";
+import { PERMISSIONS } from "../../shared/auth";
 
 const TZ = "Asia/Jakarta";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -32,11 +34,14 @@ const SELECT = (sql: postgres.Sql) => sql`
   select
     t.id, t.created_at, t.outlet, t.table_no, t.pax, t.waiter, t.method, t.room_no, t.guest_name,
     t.subtotal, t.service, t.tax, t.total, t.status, t.void_reason, t.voided_at,
+    cu.name as created_by_name, vu.name as voided_by_name,
     'POS-' || to_char(t.created_at at time zone ${TZ}, 'YYMMDD') || '-' || lpad(t.id::text, 5, '0') as no,
     (select coalesce(json_agg(json_build_object('name', i.name, 'qty', i.qty, 'price', i.price, 'amount', i.amount)
                               order by i.line_no), '[]'::json)
        from pos_transaction_items i where i.transaction_id = t.id) as items
-  from pos_transactions t`;
+  from pos_transactions t
+  left join app_users cu on cu.id = t.created_by
+  left join app_users vu on vu.id = t.voided_by`;
 
 type Row = Record<string, unknown>;
 
@@ -48,6 +53,7 @@ function toTransaction(r: Row): Transaction {
     method: r.method as PaymentMethod, roomNo: r.room_no as string | null, guestName: r.guest_name as string | null,
     subtotal: r.subtotal as number, service: r.service as number, tax: r.tax as number, total: r.total as number,
     status: r.status as Transaction["status"], voidReason: r.void_reason as string | null, voidedAt: iso(r.voided_at),
+    createdBy: r.created_by_name as string | null, voidedBy: r.voided_by_name as string | null,
     items: r.items as Transaction["items"],
   };
 }
@@ -59,8 +65,9 @@ async function byId(sql: postgres.Sql, id: number) {
 }
 
 /** POST /api/pos/transactions — store a paid or room-charged POS bill. Idempotent on clientRef. */
-export async function createTransaction({ body }: ApiRequest): Promise<Transaction> {
-  const b = (body ?? {}) as Record<string, unknown>;
+export async function createTransaction(req: ApiRequest): Promise<Transaction> {
+  const user = await requireUser(req, PERMISSIONS.saveTransaction);
+  const b = (req.body ?? {}) as Record<string, unknown>;
   if (typeof b.clientRef !== "string" || !UUID.test(b.clientRef)) throw new HttpError(400, "clientRef harus UUID");
   if (!isMethod(b.method)) throw new HttpError(400, "Metode pembayaran tidak valid");
   if (!Array.isArray(b.items) || b.items.length === 0) throw new HttpError(400, "Order masih kosong");
@@ -99,6 +106,7 @@ export async function createTransaction({ body }: ApiRequest): Promise<Transacti
         room_no: roomNo,
         guest_name: b.guestName ? text(b.guestName, "Nama tamu", 120) : null,
         subtotal: totals.sub, service: totals.svc, tax: totals.tax, total: totals.total,
+        created_by: user.id,
       })}
       on conflict (client_ref) do nothing
       returning id`;
@@ -114,7 +122,9 @@ export async function createTransaction({ body }: ApiRequest): Promise<Transacti
 }
 
 /** GET /api/pos/transactions?date=YYYY-MM-DD&method=&status= — one business day, newest first. */
-export async function listTransactions({ query }: ApiRequest) {
+export async function listTransactions(req: ApiRequest) {
+  await requireUser(req, PERMISSIONS.viewFinance);
+  const { query } = req;
   const date = query.get("date") || today();
   if (!DATE.test(date)) throw new HttpError(400, "Format tanggal harus YYYY-MM-DD");
   const method = query.get("method");
@@ -153,15 +163,16 @@ export async function listTransactions({ query }: ApiRequest) {
 }
 
 /** POST /api/pos/void { id, reason } — void a posted bill; the row is kept for audit. */
-export async function voidTransaction({ body }: ApiRequest): Promise<Transaction> {
-  const b = (body ?? {}) as Record<string, unknown>;
+export async function voidTransaction(req: ApiRequest): Promise<Transaction> {
+  const user = await requireUser(req, PERMISSIONS.voidTransaction);
+  const b = (req.body ?? {}) as Record<string, unknown>;
   if (!Number.isInteger(b.id)) throw new HttpError(400, "id transaksi tidak valid");
   const reason = text(b.reason, "Alasan void", 200);
   if (reason.length < 3) throw new HttpError(400, "Alasan void minimal 3 karakter");
 
   const sql = await db();
   const [row] = await sql`
-    update pos_transactions set status = 'void', void_reason = ${reason}, voided_at = now()
+    update pos_transactions set status = 'void', void_reason = ${reason}, voided_at = now(), voided_by = ${user.id}
     where id = ${b.id as number} and status = 'posted'
     returning id`;
   if (!row) {

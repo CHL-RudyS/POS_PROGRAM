@@ -2,6 +2,7 @@ import { useState } from "react";
 import logo from "../logo-chl.png";
 import { COMPANY_VALUES, LANGS, LOGIN_ROLES, T, type Lang, type ScreenId } from "../data";
 import { useStored } from "../store";
+import { login } from "../api";
 import { CaretDown } from "../components/icons";
 
 export function Login({ onGo }: { onGo: (id: ScreenId) => void }) {
@@ -9,7 +10,25 @@ export function Login({ onGo }: { onGo: (id: ScreenId) => void }) {
   const [langOpen, setLangOpen] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [role, setRole] = useStored("login.role", LOGIN_ROLES[0]);
+  const [email, setEmail] = useStored("login.email", "");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const t = T[lang];
+
+  const submit = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await login(email, password);
+      setPassword("");
+      onGo(role.to);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="login">
@@ -38,7 +57,7 @@ export function Login({ onGo }: { onGo: (id: ScreenId) => void }) {
         </div>
       </div>
 
-      <form className="login-card" onSubmit={(e) => { e.preventDefault(); onGo(role.to); }}>
+      <form className="login-card" onSubmit={(e) => { e.preventDefault(); if (!busy) submit(); }}>
         <div className="lang-picker">
           <button type="button" className="lang-toggle" onClick={() => setLangOpen(!langOpen)} aria-expanded={langOpen}>
             <span className={`flag flag-lg flag-${lang}`} />
@@ -67,12 +86,13 @@ export function Login({ onGo }: { onGo: (id: ScreenId) => void }) {
 
         <div className="field login-field is-first">
           <label htmlFor="login-email">{t.email}</label>
-          <input id="login-email" className="input" type="email" defaultValue="rina.pratiwi@kantor.id" autoComplete="username" />
+          <input id="login-email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            placeholder="nama@ciptaharmoni.com" autoComplete="username" required />
         </div>
         <div className="field login-field">
           <label htmlFor="login-pass">{t.pass}</label>
-          <input id="login-pass" className="input" type={showPass ? "text" : "password"} defaultValue="rahasia123"
-            autoComplete="current-password" />
+          <input id="login-pass" className="input" type={showPass ? "text" : "password"} value={password}
+            onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
         </div>
         <label className="login-showpass">
           <input type="checkbox" checked={showPass} onChange={() => setShowPass(!showPass)} />
@@ -87,7 +107,9 @@ export function Login({ onGo }: { onGo: (id: ScreenId) => void }) {
           ))}
         </div>
 
-        <button type="submit" className="btn btn-primary btn-block login-submit">{t.btn}</button>
+        {error && <div className="form-error login-error" role="alert">{error}</div>}
+
+        <button type="submit" className="btn btn-primary btn-block login-submit" disabled={busy}>{busy ? t.busy : t.btn}</button>
 
         <div className="login-links">
           <a href="#" onClick={(e) => e.preventDefault()}>{t.forgot}</a>

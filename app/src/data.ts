@@ -35,12 +35,12 @@ export type Lang = "ID" | "EN";
 export const T: Record<Lang, Record<string, string>> = {
   ID: {
     welcome: "Selamat Datang Kembali", signin: "Masuk Email Kantor Anda", email: "Email", pass: "Kata Sandi",
-    showPass: "Lihat kata sandi", role: "Peran", btn: "Masuk", forgot: "Lupa kata sandi",
+    showPass: "Lihat kata sandi", role: "Peran", btn: "Masuk", busy: "Memproses…", forgot: "Lupa kata sandi",
     need: "Butuh akun? Hubungi Admin", lastOut: "Logout terakhir dari perangkat ini",
   },
   EN: {
     welcome: "Welcome Back", signin: "Sign in with your office email", email: "Email", pass: "Password",
-    showPass: "Show password", role: "Role", btn: "Sign in", forgot: "Forgot password",
+    showPass: "Show password", role: "Role", btn: "Sign in", busy: "Signing in…", forgot: "Forgot password",
     need: "Need an account? Contact Admin", lastOut: "Last logout from this device",
   },
 };

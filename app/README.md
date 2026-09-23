@@ -11,8 +11,10 @@ npm run build    # type-check + production build to dist/
 
 POS payments (02F) are saved to Postgres through the API and listed on 04 Finance.
 For local development, run `npm install` in the repo root too, then copy
-`.env.example` to `.env.local` and set `DATABASE_URL`. Without it the other
-screens work and POS/Finance show "Database belum dikonfigurasi".
+`.env.example` to `.env.local` and set `DATABASE_URL`, `AUTH_SECRET` and the first
+admin (`ADMIN_EMAIL`, `ADMIN_PASSWORD`). The Login screen signs in against the API;
+saving POS bills and the Finance screen need a signed-in user with the right role
+(see the root README). Without these settings the other screens still work.
 
 The app always opens on **00 Login**. Switch screens with the floating
 **Menu Layar** pill at bottom-left (see `../project/CLAUDE.md`).
