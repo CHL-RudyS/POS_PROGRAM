@@ -14,6 +14,7 @@ import { Housekeeping } from "./screens/Housekeeping";
 import { PosResto } from "./screens/PosResto";
 import { GmDashboard } from "./screens/GmDashboard";
 import { Finance } from "./screens/Finance";
+import { Users } from "./screens/Users";
 
 export function App() {
   // The app always opens on 00 Login.
@@ -39,6 +40,7 @@ export function App() {
       case "hk": return <Housekeeping />;
       case "pos": return <PosResto onGo={go} />;
       case "finance": return <Finance onGo={go} />;
+      case "users": return <Users onGo={go} />;
       case "gm": return <GmDashboard />;
     }
   })();

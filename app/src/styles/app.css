@@ -525,3 +525,28 @@ a:hover { color: var(--color-accent-700); }
 }
 .fin-error strong { font-weight: 600; }
 .login-error { margin: 0 0 var(--space-3); }
+
+/* ── 05 User ───────────────────────────────────────────── */
+.users-search { min-width: 220px; }
+.users-search input { padding: 7px 12px; font-size: 13px; }
+.users-you { font-size: 12px; color: var(--color-accent-700); }
+.fin-table tbody tr.is-inactive td { color: var(--color-neutral-600); }
+.users-meta { font-size: 12px; color: var(--color-neutral-700); }
+.users-roles { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.users-roles:disabled { opacity: 0.55; }
+.users-roles:disabled .radio { cursor: not-allowed; }
+.field-legend { font-size: 12px; margin-bottom: 5px; padding: 0; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+.users-role { align-items: flex-start; }
+.users-role .dot { margin-top: 2px; }
+.users-role-name { display: block; font-size: 13.5px; }
+.users-role-hint { display: block; font-size: 11.5px; color: var(--color-neutral-700); }
+.users-active { margin: 0; }
+.users-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-divider); }
+.users-password { display: flex; gap: var(--space-2); align-items: stretch; }
+.users-password .input { flex: 1; min-width: 0; }
+.users-showpass { margin: var(--space-1) 0 0; }
+.users-handover {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); background: var(--color-bg); border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.users-handover code { font-size: 16px; letter-spacing: 0.06em; user-select: all; }

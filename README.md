@@ -4,7 +4,7 @@ HotelOne — Integrated Hotel Management System untuk CHL Group (PT. Cipta Harmo
 
 | Folder | Isi |
 | --- | --- |
-| `app/` | Aplikasi React + TypeScript + Vite — 11 layar (00 Login … 04 Finance). Lihat `app/README.md`. |
+| `app/` | Aplikasi React + TypeScript + Vite — 12 layar (00 Login … 05 User). Lihat `app/README.md`. |
 | `api/` | API serverless Vercel untuk transaksi POS (Postgres). |
 | `shared/` | Menu, aturan pajak/service, dan tipe transaksi yang dipakai app dan API. |
 | `project/` | Bundle desain dari Claude Design: `POS Program.html` (prototipe), design system Broadsheet, aset, PRD, dan `HANDOFF.md`. |
@@ -51,18 +51,13 @@ disimpan ke Postgres dan tampil di layar **04 Finance**. Semua API (kecuali `/ap
 
 Setiap transaksi mencatat siapa yang menyimpan dan siapa yang mem-void.
 
-### Menambah user
+### Mengelola user
 
-Belum ada layar kelola user. Sementara lewat API — login sebagai admin di browser, lalu
-jalankan di Console (F12) pada halaman aplikasi:
-
-```js
-await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email: "kasir1@ciptaharmoni.com", name: "Sari Handayani", role: "cashier", password: "min-8-karakter" }) }).then(r => r.json())
-```
-
-Ubah / nonaktifkan / reset password: `POST /api/admin/user-update` dengan `{ id, name?, role?, active?, password? }`.
-Menonaktifkan user, mengganti peran, atau mengganti password langsung mengakhiri semua sesinya.
+Login sebagai Administrator, buka **05 User** di Menu Layar. Di sana bisa:
+menambah user (password acak dibuat otomatis dan ditampilkan sekali untuk disampaikan),
+mengubah nama dan peran, menonaktifkan akun, reset password, dan membuka akun yang terkunci.
+Mengubah peran, menonaktifkan, atau reset password langsung mengeluarkan user itu dari semua perangkat.
+Admin tidak bisa menonaktifkan atau menurunkan peran akunnya sendiri.
 
 ## Endpoint
 
@@ -73,7 +68,7 @@ Menonaktifkan user, mengganti peran, atau mengganti password langsung mengakhiri
 | `GET /api/pos/transactions?date=YYYY-MM-DD&method=&status=` | finance, supervisor, admin | Transaksi satu hari (WIB) + ringkasan |
 | `POST /api/pos/transactions` | cashier, supervisor, admin | Simpan transaksi — total dihitung ulang di server |
 | `POST /api/pos/void` | supervisor, admin | Void dengan alasan (baris tetap disimpan) |
-| `GET/POST /api/admin/users` · `POST /api/admin/user-update` | admin | Kelola user |
+| `GET/POST /api/admin/users` · `POST /api/admin/user-update` | admin | Kelola user (`{ id, name?, role?, active?, password?, unlock? }`) |
 
 Keamanan: password di-hash scrypt; akun terkunci 15 menit setelah 5 kali salah password;
 POST wajib `Content-Type: application/json` (mencegah CSRF). Tabel: `app_users`,

@@ -5,7 +5,8 @@ import { HttpError, type ApiRequest } from "./http";
 import { hashPassword, validatePassword } from "./passwords";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const COLUMNS = "id, email, name, role, active, last_login_at as \"lastLoginAt\", created_at as \"createdAt\"";
+const COLUMNS = `id, email, name, role, active, coalesce(locked_until > now(), false) as locked,
+  last_login_at as "lastLoginAt", created_at as "createdAt"`;
 
 /** GET /api/admin/users */
 export async function listUsers(req: ApiRequest) {
@@ -35,7 +36,10 @@ export async function createUser(req: ApiRequest) {
   return row;
 }
 
-/** POST /api/admin/user-update { id, name?, role?, active?, password? } — password or deactivation signs the user out everywhere. */
+/**
+ * POST /api/admin/user-update { id, name?, role?, active?, password?, unlock? }
+ * A new password, role change or deactivation signs the user out everywhere.
+ */
 export async function updateUser(req: ApiRequest) {
   const admin = await requireUser(req, PERMISSIONS.manageUsers);
   const b = (req.body ?? {}) as Record<string, unknown>;
@@ -55,17 +59,19 @@ export async function updateUser(req: ApiRequest) {
     changes.active = b.active;
   }
   if (b.password !== undefined) changes.password_hash = await hashPassword(validatePassword(b.password));
-  if (Object.keys(changes).length === 0) throw new HttpError(400, "Tidak ada perubahan");
+  if (b.unlock !== undefined && b.unlock !== true) throw new HttpError(400, "unlock harus true");
+  const unlock = b.unlock === true || changes.password_hash !== undefined;
+  if (Object.keys(changes).length === 0 && !unlock) throw new HttpError(400, "Tidak ada perubahan");
   if (id === admin.id && (changes.active === false || (changes.role && changes.role !== "admin"))) {
     throw new HttpError(400, "Anda tidak bisa menonaktifkan atau menurunkan peran akun sendiri");
   }
 
   const sql = await db();
   const signOut = changes.password_hash !== undefined || changes.active === false || changes.role !== undefined;
+  if (unlock) Object.assign(changes, { failed_logins: 0, locked_until: null });
   const [u] = await sql`
     update app_users set ${sql(changes)}
       ${signOut ? sql`, session_version = session_version + 1` : sql``}
-      ${changes.password_hash ? sql`, failed_logins = 0, locked_until = null` : sql``}
     where id = ${id}
     returning id`;
   if (!u) throw new HttpError(404, "User tidak ditemukan");

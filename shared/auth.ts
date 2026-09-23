@@ -19,3 +19,11 @@ export const can = (role: Role | undefined, action: keyof typeof PERMISSIONS) =>
   !!role && (PERMISSIONS[action] as readonly Role[]).includes(role);
 
 export interface SessionUser { id: number; email: string; name: string; role: Role }
+
+/** A user as listed on the 05 User screen. */
+export interface AdminUser extends SessionUser {
+  active: boolean;
+  locked: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+}

@@ -32,6 +32,7 @@ The app always opens on **00 Login**. Switch screens with the floating
 | 02F | FD - POS Resto | `src/screens/PosResto.tsx` |
 | 03 | GM Dashboard | `src/screens/GmDashboard.tsx` |
 | 04 | Finance | `src/screens/Finance.tsx` |
+| 05 | User | `src/screens/Users.tsx` |
 
 - `src/api.ts` calls the POS API; `../shared/pos.ts` holds the menu, tax rules and
   transaction types used by both the app and the API.

@@ -3,7 +3,7 @@
 
 export type ScreenId =
   | "login" | "unit" | "frontdesk" | "avail" | "checkin"
-  | "folio" | "rack" | "hk" | "pos" | "gm" | "finance";
+  | "folio" | "rack" | "hk" | "pos" | "gm" | "finance" | "users";
 
 export interface Screen { id: ScreenId; label: string; num: string }
 
@@ -19,6 +19,7 @@ export const SCREENS: Screen[] = [
   { id: "pos", label: "FD - POS Resto", num: "02F" },
   { id: "gm", label: "GM Dashboard", num: "03" },
   { id: "finance", label: "Finance", num: "04" },
+  { id: "users", label: "User", num: "05" },
 ];
 
 export const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");

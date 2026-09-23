@@ -1,5 +1,5 @@
 import type { NewTransaction, PaymentMethod, Transaction, TransactionSummary } from "../../shared/pos";
-import type { SessionUser } from "../../shared/auth";
+import type { AdminUser, Role, SessionUser } from "../../shared/auth";
 import { setStored } from "./store";
 
 export class ApiError extends Error {
@@ -65,4 +65,18 @@ export function listTransactions(filter: { date: string; method?: PaymentMethod 
 
 export function voidTransaction(id: number, reason: string) {
   return request<Transaction>("/api/pos/void", { method: "POST", body: JSON.stringify({ id, reason }) });
+}
+
+/* ── Users (admin) ─────────────────────────────────────── */
+
+export function listUsers() {
+  return request<{ users: AdminUser[] }>("/api/admin/users");
+}
+
+export function createUser(user: { email: string; name: string; role: Role; password: string }) {
+  return request<AdminUser>("/api/admin/users", { method: "POST", body: JSON.stringify(user) });
+}
+
+export function updateUser(id: number, changes: { name?: string; role?: Role; active?: boolean; password?: string; unlock?: true }) {
+  return request<AdminUser>("/api/admin/user-update", { method: "POST", body: JSON.stringify({ id, ...changes }) });
 }
